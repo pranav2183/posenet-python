@@ -2,6 +2,7 @@ import tensorflow as tf
 import cv2
 import time
 import argparse
+import numpy as np
 
 import posenet
 
@@ -17,6 +18,7 @@ args = parser.parse_args()
 
 def main():
     with tf.Session() as sess:
+        data=[]
         model_cfg, model_outputs = posenet.load_model(args.model, sess)
         output_stride = model_cfg['output_stride']
 
@@ -44,10 +46,13 @@ def main():
                 displacement_fwd_result.squeeze(axis=0),
                 displacement_bwd_result.squeeze(axis=0),
                 output_stride=output_stride,
-                max_pose_detections=10,
+                max_pose_detections=1,
                 min_pose_score=0.15)
 
             keypoint_coords *= output_scale
+            temp = keypoint_coords.reshape(34, 1)
+            data.append(temp)
+            #print(keypoint_coords.shape)
 
             # TODO this isn't particularly fast, use GL for drawing and display someday...
             overlay_image = posenet.draw_skel_and_kp(
@@ -56,7 +61,8 @@ def main():
 
             cv2.imshow('posenet', overlay_image)
             frame_count += 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if time.time()-start > 20:
+                print(data)
                 break
 
         print('Average FPS: ', frame_count / (time.time() - start))
@@ -64,3 +70,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+'''temp = keypoint_coords.reshape(34, 1)
+            data.append(temp)
+            print(data)'''
